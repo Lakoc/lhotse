@@ -12,9 +12,10 @@ from lhotse.supervision import AlignmentItem, SupervisionSegment, SupervisionSet
 from lhotse.utils import Pathlike
 
 
-def download_notsofar(
+def download_notsofar1(
     target_dir: Pathlike = ".",
     parts: Tuple[str] = ("train", "dev", "test"),
+    mic: str = "sdm",
     train_version: str = "240825.1_train",
     dev_version: str = "240825.1_dev1",
     test_version: str = "240629.1_eval_small_with_GT",
@@ -53,18 +54,30 @@ def download_notsofar(
                 f"Unknown part: {part}. Expected one of: 'train', 'dev', 'test'."
             )
 
+        download_patterns = [
+            f"benchmark-datasets/{subset_name}/{version}/MTG/*/*.json",
+        ]
+        if mic == "sdm":
+            download_patterns.append(
+                f"benchmark-datasets/{subset_name}/{version}/MTG/*/sc_*"
+            )
+        elif mic == "mdm":
+            download_patterns.append(
+                f"benchmark-datasets/{subset_name}/{version}/MTG/*/mc_*"
+            )
+
         snapshot_download(
             repo_id="microsoft/NOTSOFAR",
             repo_type="dataset",
             local_dir=target_dir,
             force_download=bool(force_download),
-            allow_patterns=f"benchmark-datasets/{subset_name}/{version}/*",
+            allow_patterns=download_patterns,
         )
 
     return target_dir
 
 
-def prepare_notsofar(
+def prepare_notsofar1(
     corpus_dir: Pathlike,
     output_dir: Optional[Pathlike] = None,
 ) -> Dict[str, Dict[str, Union[RecordingSet, SupervisionSet]]]:
@@ -78,11 +91,11 @@ def prepare_notsofar(
 
     manifests = defaultdict(dict)
 
-    for part in os.listdir(corpus_dir):
+    for part in _listdir_safe(corpus_dir):
         part_dir = corpus_dir / part
         manifests[part] = defaultdict(dict)
 
-        for version in os.listdir(part_dir):
+        for version in _listdir_safe(part_dir):
             version_dir = part_dir / version / "MTG"
             sc_cuts, mc_cuts = process_data(
                 version_dir, word_level=False, create_word_alignment=True
@@ -93,7 +106,7 @@ def prepare_notsofar(
                 sc_recs, sc_sups = fix_manifests(
                     *CutSet.from_cuts(sc_cuts).decompose()[:2]
                 )
-                tag = f"notsofar_sc_{part}_{version}"
+                tag = f"notsofar1_sdm_{part}_{version}"
                 sc_recs.to_file(output_dir / f"{tag}_recordings.jsonl.gz")
                 sc_sups.to_file(output_dir / f"{tag}_supervisions.jsonl.gz")
                 manifests[part][version]["single_channel"] = {
@@ -105,7 +118,7 @@ def prepare_notsofar(
                 mc_recs, mc_sups = fix_manifests(
                     *CutSet.from_cuts(mc_cuts).decompose()[:2]
                 )
-                tag = f"notsofar_mc_{part}_{version}"
+                tag = f"notsofar1_mdm_{part}_{version}"
                 mc_recs.to_file(output_dir / f"{tag}_recordings.jsonl.gz")
                 mc_sups.to_file(output_dir / f"{tag}_supervisions.jsonl.gz")
                 manifests[part][version]["multi_channel"] = {
@@ -116,10 +129,14 @@ def prepare_notsofar(
     return manifests
 
 
+def _listdir_safe(path: Pathlike) -> List[str]:
+    return list(filter(lambda name: ".DS_Store" not in name, os.listdir(path)))
+
+
 def process_data(
     dataset_path, word_level=False, create_word_alignment=True
 ) -> Tuple[List[MonoCut], List[MonoCut]]:
-    meetings = sorted(os.listdir(dataset_path))
+    meetings = sorted(_listdir_safe(dataset_path))
     sc_cuts = []
     mc_cuts = []
 
@@ -130,7 +147,7 @@ def process_data(
             list(
                 filter(
                     lambda x: x != "close_talk" and os.path.isdir(meeting_root / x),
-                    os.listdir(meeting_root),
+                    _listdir_safe(meeting_root),
                 )
             )
         )
@@ -144,7 +161,7 @@ def process_data(
             is_multi_channel = "mc" in device
             if is_multi_channel:
                 # We assume the channel numbers range from 0 to num_channels - 1.
-                num_channels = len(os.listdir(device_path))
+                num_channels = len(_listdir_safe(device_path))
                 recording = Recording.from_file(device_path / f"ch0.wav")
                 recording.id = device_id
                 recording.channel_ids = list(range(num_channels))
