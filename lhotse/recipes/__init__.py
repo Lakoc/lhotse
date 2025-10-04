@@ -60,6 +60,7 @@ from .libritts import (
 )
 from .ljspeech import download_ljspeech, prepare_ljspeech
 from .magicdata import download_magicdata, prepare_magicdata
+from .mcorec import download_mcorec, prepare_mcorec
 from .mdcc import download_mdcc, prepare_mdcc
 from .medical import download_medical, prepare_medical
 from .mgb2 import prepare_mgb2
