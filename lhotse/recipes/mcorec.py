@@ -1,25 +1,17 @@
-import itertools
-import json
 import logging
 import os
-import shutil
 import subprocess
-import tempfile
 import zipfile
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, wait
-from datetime import datetime as dt
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Dict, Optional, Sequence, Union
 
-import numpy as np
 from tqdm import tqdm
 
 from lhotse import fix_manifests, validate_recordings_and_supervisions
-from lhotse.audio import AudioSource, Recording, RecordingSet
-from lhotse.recipes.utils import TimeFormatConverter, normalize_text_chime6
+from lhotse.audio import Recording, RecordingSet
 from lhotse.supervision import SupervisionSegment, SupervisionSet
-from lhotse.utils import Pathlike, add_durations, resumable_download
+from lhotse.utils import Pathlike, resumable_download
 
 
 def download_mcorec(
@@ -163,7 +155,7 @@ def prepare_mcorec(
 
 
 def _convert_vid_to_single_ch_audio(
-    video_path, output_path, skip_existing: bool = True
+    video_path: Pathlike, output_path: Pathlike, skip_existing: bool = True
 ) -> None:
     if os.path.exists(output_path) and skip_existing:
         return
