@@ -159,6 +159,8 @@ a CLI tool that create the manifests given a corpus directory.
     - :func:`lhotse.recipes.prepare_librittsr`
   * - LJ Speech
     - :func:`lhotse.recipes.prepare_ljspeech`
+  * - MCoRec
+    - :func:`lhotse.recipes.prepare_mcorec`
   * - MDCC
     - :func:`lhotse.recipes.prepare_mdcc`
   * - Medical
