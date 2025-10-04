@@ -59,8 +59,7 @@ def prepare_mcorec(
             "webvtt is not installed, please, run `pip install webvtt-py`."
         )
 
-    # available_parts = set(("train", "dev"))
-    available_parts = set(("dev",))
+    available_parts = set(("train", "dev"))
     parts_to_process = []
 
     if isinstance(dataset_parts, list) or isinstance(dataset_parts, tuple):
