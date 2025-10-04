@@ -45,6 +45,17 @@ def mcorec(
 
 @download.command(context_settings=dict(show_default=True))
 @click.argument("target_dir", type=click.Path())
-def mcorec(target_dir: Pathlike):
+@click.option(
+    "--force-download",
+    type=bool,
+    default=False,
+    help="If True, download even if file is present.",
+)
+@click.option(
+    "--hf-token",
+    type=str,
+    help="Hugging Face token.",
+)
+def mcorec(target_dir: Pathlike, force_download: bool, hf_token: str):
     """MCoRec download."""
-    download_mcorec(target_dir)
+    download_mcorec(target_dir, force_download=force_download, hf_token=hf_token)

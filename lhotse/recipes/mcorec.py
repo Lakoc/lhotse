@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import zipfile
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, wait
 from datetime import datetime as dt
@@ -23,8 +24,33 @@ from lhotse.utils import Pathlike, add_durations, resumable_download
 
 def download_mcorec(
     target_dir: Pathlike = ".",
+    force_download: bool = False,
+    hf_token: str = "",
 ) -> Path:
-    logging.warning("TBA")
+    base_url = "https://huggingface.co/datasets/MCoRecChallenge/MCoRec/resolve/main"
+    files_to_download = (
+        "dev_without_central_videos.zip",
+        "dev_only_central_videos.zip",
+        "train_without_central_videos.zip",
+        "train_only_central_videos.zip",
+    )
+    auth_header = {"Authorization": f"Bearer {hf_token}"}
+    target_dir = Path(target_dir)
+    os.makedirs(target_dir, exist_ok=True)
+
+    for zip_name in files_to_download:
+        zip_path = target_dir / zip_name
+        resumable_download(
+            f"{base_url}/{zip_name}",
+            filename=zip_path,
+            force_download=force_download,
+            additional_headers=auth_header,
+        )
+
+        # Remove partial unpacked files, if any, and unpack everything.
+        with zipfile.ZipFile(zip_path) as zip_f:
+            zip_f.extractall(path=target_dir)
+
     return Path(target_dir)
 
 
@@ -34,7 +60,6 @@ def prepare_mcorec(
     dataset_parts: Optional[Union[str, Sequence[str]]] = "all",
     num_jobs: int = 1,
 ) -> Dict[str, Dict[str, Union[RecordingSet, SupervisionSet]]]:
-    print(dataset_parts)
     try:
         import webvtt
     except ImportError:
@@ -53,7 +78,7 @@ def prepare_mcorec(
             for part in dataset_parts:
                 if part not in available_parts:
                     raise ValueError(
-                        f"{part} is not a valid dataset part. Choose one of: {dataset_parts}."
+                        f"{part} is not a valid dataset part. Choose one of: {available_parts}."
                     )
                 parts_to_process.append(part)
 
@@ -63,7 +88,7 @@ def prepare_mcorec(
             parts_to_process = list(available_parts)
         elif dataset_parts not in available_parts:
             raise ValueError(
-                f"{dataset_parts} is not a valid dataset part. Choose one of: {dataset_parts}."
+                f"{dataset_parts} is not a valid dataset part. Choose one of: {available_parts}."
             )
         else:
             parts_to_process = [dataset_parts]
@@ -142,8 +167,22 @@ def _convert_vid_to_single_ch_audio(
 ) -> None:
     if os.path.exists(output_path) and skip_existing:
         return
-    command = f"ffmpeg -i {video_path} -hide_banner -loglevel error -ac 1 -ar 16000 -vn {output_path}"
-    subprocess.call(command, shell=True)
+
+    command = [
+        "ffmpeg",
+        "-i",
+        str(video_path),
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-ac",
+        "1",
+        "-ar",
+        "16000",
+        "-vn",
+        str(output_path),
+    ]
+    subprocess.run(command, check=True)
 
 
 def _convert_time_str_to_float(time_str: str) -> float:
