@@ -159,21 +159,8 @@ def _convert_vid_to_single_ch_audio(
     if os.path.exists(output_path) and skip_existing:
         return
 
-    command = [
-        "ffmpeg",
-        "-i",
-        str(video_path),
-        "-hide_banner",
-        "-loglevel",
-        "error",
-        "-ac",
-        "1",
-        "-ar",
-        "16000",
-        "-vn",
-        str(output_path),
-    ]
-    subprocess.run(command, check=True)
+    cmd = f'ffmpeg -i "{video_path}" -hide_banner -loglevel error -ac 1 -ar 16000 -vn "{output_path}"'
+    subprocess.run(cmd, check=True, shell=True)
 
 
 def _convert_time_str_to_float(time_str: str) -> float:
