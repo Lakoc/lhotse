@@ -61,6 +61,7 @@ from .librispeechmix import *
 from .libritts import *
 from .ljspeech import *
 from .magicdata import *
+from .mcorec import *
 from .mdcc import *
 from .medical import *
 from .mgb2 import *

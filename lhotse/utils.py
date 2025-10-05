@@ -469,6 +469,7 @@ def resumable_download(
     force_download: bool = False,
     completed_file_size: Optional[int] = None,
     missing_ok: bool = False,
+    additional_headers: Optional[Dict[str, str]] = None,
     request_ssl_context: Optional[SSLContext] = None,
 ) -> None:
     # Check if the file exists and get its size
@@ -496,6 +497,9 @@ def resumable_download(
         "Range": "bytes={}-".format(file_size),
         **ua_headers,
     }
+
+    if additional_headers is not None:
+        headers.update(additional_headers)
 
     # Create a request object with the URL and headers
     req = urllib.request.Request(url, headers=headers)
