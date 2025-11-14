@@ -60,6 +60,7 @@ from .librispeech import *
 from .librispeechmix import *
 from .libritts import *
 from .ljspeech import *
+from .lrs2 import *
 from .magicdata import *
 from .mdcc import *
 from .medical import *

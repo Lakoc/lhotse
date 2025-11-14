@@ -61,6 +61,7 @@ from .libritts import (
     prepare_librittsr,
 )
 from .ljspeech import download_ljspeech, prepare_ljspeech
+from .lrs2 import download_lrs2, prepare_lrs2
 from .magicdata import download_magicdata, prepare_magicdata
 from .mdcc import download_mdcc, prepare_mdcc
 from .medical import download_medical, prepare_medical
