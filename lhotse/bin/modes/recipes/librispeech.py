@@ -69,8 +69,16 @@ def librispeech(
     default=True,
     help="Download Librispeech [default] or mini Librispeech.",
 )
-def librispeech(target_dir: Pathlike, full: bool):
+@click.option(
+    "--alignments",
+    is_flag=True,
+    default=False,
+    help="Download Librispeech alignments as well.",
+)
+def librispeech(target_dir: Pathlike, full: bool, alignments: bool):
     """(Mini) Librispeech download."""
     download_librispeech(
-        target_dir, dataset_parts="librispeech" if full else "mini_librispeech"
+        target_dir,
+        dataset_parts="librispeech" if full else "mini_librispeech",
+        alignments=alignments,
     )
